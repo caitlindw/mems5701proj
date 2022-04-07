@@ -1,20 +1,24 @@
 %General values
-Tt_p = 540; %Rankin
+Tt_p = 540; %Rankine
 Pt_chamber = 2*10^5; %psf
 Cfg = 0.96;
 gamma = 1.4;
 R0_air = 49710/(28.97*0.06852177); %gas constant / mixture avg molecular weight (slug/Kmol)
 
 %TO DO
-% get standard atmosphere table values
 % compute R, C_p for all species
 
+
 %% Launch condition: M=0.8, 30,000 ft altitude, min F_np = 4000 lbf
-M0_launch = 0.8;
-rho0_launch = 0; %find using altitude
-T0_launch = 0; %find using altitude
+% Freestream Conditions
+M0_launch   = 0.8;
+rho0_launch = 8.91e-4;      % slug / cu_ft - Atmosphere Table
+T0_launch   = 411.84;       % R - Atmosphere Table
+P0_launch   = 4.373 * 144;  % lbf / sq_ft
+
 F_np_min_launch = 4000; %lbf
 V0_launch = M0_launch*sqrt(gamma*R0_air*T0_launch);
+
 
 %cowl drag, launch
 C_D_launch = 0.2;
@@ -35,9 +39,12 @@ Tt2_launch = 1/(TrixM(M0_launch, gamma))*T0_launch;
 %F = m_dot*V_exhaust;
 
 %% Cruise condition: M=4, 60,000 ft altitude, min F_np = 5000 lbf
-M0_cruise = 4;
-rho0_cruise = 0; %find using altitude
-T0_cruise = 0; %find using altitude
+% Freestream Conditions
+M0_cruise   = 4.0;
+rho0_cruise = 2.26e-4;      % slug / cu_ft - Atmosphere Table
+T0_cruise   = 389.97;       % R - Atmosphere Table
+P0_cruise   = 1.049 * 144;  % lbf / sq_ft
+
 F_np_min_cruise = 5000; %lbf
 
 V0_cruise = M0_cruise*sqrt(gamma*R0_air*T0_cruise);
