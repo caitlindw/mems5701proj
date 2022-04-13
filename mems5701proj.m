@@ -79,7 +79,7 @@ M15_cruise = 0.2;
             
             %innermost loop: guess m_dotc = 200lb/s
                 %stop condition = F_N given -> make a while loop
-                %for selected ph and beta = 0, compute mass flows of H, O
+                %for selected ph and beta (bypass ratio) = 0, compute mass flows of H, O
                     %Mk_O2 = 32
                     %Mk_H2 = 4
                     %phi = (m_dotH2/m_dotO2)/(mH2_st/mO2_st)
@@ -88,7 +88,12 @@ M15_cruise = 0.2;
                     %syms m_dotH2 m_dotO2
                     %eq1 = phi == (m_dotH2/m_dotO2)/(mH2_st/mO2_st);
                     %eq2 = m_dotc = m_dotH2 + m_dotO2;
-                    %[m_dotH2_sol,m_dotO2+sol] = solve([eq1,eq2],[m_dotH2,m_dotO2])
+                    %[m_dotH2_sol,m_dotO2_sol] = solve([eq1,eq2],[m_dotH2,m_dotO2])
+                    
+                    %MAYBE
+                    %find At using C* = sqrt(R*Tt)/mft_M=1 and m_dot =
+                    %a*P_c*Ab*rho_s and At = m_dot*C*/Pt
+
                     
     
 
