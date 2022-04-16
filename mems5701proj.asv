@@ -153,7 +153,7 @@ M15_cruise = 0.2;
                     %D_cowl = q*C_D*A_cowl;
                     %F_N = Fg - Dram - D_cowl;
 
-                    %check if F_N requirement for cruise/launch
+                    %check if F_N requirement for cruise/
                     
 
                     
