@@ -239,40 +239,7 @@ for phi = [1 2 10 1000]
 end
 
 figure(1);
-hold on;
-plot(A0,TSFC_cruise(1,:));
-plot(A0,TSFC_cruise(2,:));
-plot(A0,TSFC_cruise(3,:));
-plot(A0,TSFC_cruise(4,:));
+plot(A0,TSFC_cruise);
 xlabel('A0 Sweep, ft^2');
 ylabel('TSFC');
 title('TSFC Values over A0 Sweep for Cruise');
-legend('\phi = 1','\phi = 2','\phi = 10','\phi = 1000');
-hold off;
-
-figure(2);
-hold on;
-plot(A0,Isp_cruise(1,:));
-plot(A0,Isp_cruise(2,:));
-plot(A0,Isp_cruise(3,:));
-plot(A0,Isp_cruise(4,:));
-xlabel('A0 Sweep (ft^2)');
-ylabel('Isp (s)');
-title('Isp Values over A0 Sweep for Cruise');
-legend('\phi = 1','\phi = 2','\phi = 10','\phi = 1000');
-hold off;
-
-figure(3);
-hold on;
-plot(A0,Fs_cruise(1,:));
-plot(A0,Fs_cruise(2,:));
-plot(A0,Fs_cruise(3,:));
-plot(A0,Fs_cruise(4,:));
-xlabel('A0 Sweep (ft^2)');
-ylabel('Fs (lb)');
-title('Specific Thrust Values over A0 Sweep for Cruise');
-legend('\phi = 1','\phi = 2','\phi = 10','\phi = 1000');
-hold off;
-
-%maximum Isp
-[Isp_max,Isp_max_indices] = max(Isp_cruise,[],2);
