@@ -72,9 +72,6 @@ ht_H2_cruise = zeros(4,151);
 ht_O2_cruise = zeros(4,151);
 h_int_p_cruise = zeros(4,151);
 Ttx_cruise = zeros(4,151);
-P15_cruise = zeros(4,151);
-Px_cruise = zeros(4,151);
-Mx_cruise = zeros(4,151);
 phi_i = 0;
 A0_i = 0;
 
@@ -128,9 +125,10 @@ for phi = [1 2 10 1000]
             
             %Station 5
             Pt_x = Pt_c;
-            P15_cruise(phi_i,A0_i) = PrixM(M15, gamma)*Pt15_cruise(phi_i,A0_i);
-            Px_cruise(phi_i,A0_i) = P15_cruise(phi_i,A0_i);
-            Mx_cruise(phi_i,A0_i) = MxPri(Px_cruise(phi_i,A0_i)/Pt_x, gamma);
+            Pr_15 = PrixM(M15, gamma); %P/Pt
+            P15 = Pr_15*Pt15;
+            Px = P15;
+            Mx = MxPri(Px/Pt_x, gamma);
             Mft_x = MftxM(Mx, gamma);
             Tx = TrixM(Mx, gamma)*Ttx;
             Rx = Rc;
