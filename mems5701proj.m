@@ -1,6 +1,6 @@
 %General values
 Tt_p = 540; %Rankine
-Pt_chamber = 2*10^5; %psf
+Pt_c = 2*10^5; %psf
 Cfg = 0.96;
 gamma = 1.4;
 R0 = 49710/(28.97*0.06852177); %gas constant / mixture avg molecular weight (slug/Kmol)
@@ -87,36 +87,37 @@ M15_cruise = 0.2;
                     %eq2 = m_dot_c = m_dotH2 + m_dotO2;
                     %[m_dotH2_sol,m_dotO2_sol] = solve([eq1,eq2],[m_dotH2,m_dotO2])
                     
-
-                    %Station t
                     %ht_H2 = Cp_H2*Tt_p*m_dot_H2_sol;
                     %ht_O2 = Cp_O2*Tt_p*m_dot_O2_sol;
                     %yN_p = 0;
                     %yO_p = 32/34;
                     %yH_p = 2/34;
-                    %MWT_t = MWT_yHyOyN(yH_p, yO_p, 0);
-                    %Rt = 49710/MWT_t;
-                    %At = m_dot_c*sqrt(
-
-                    
+                    %MWT_c = MWT_yHyOyN(yH_p, yO_p, 0);
+                    %Rc = 49710/MWT_t;                    
 
                     %Station x
                     %m_dot_x = m_dot_c;
                     %h_int_p = (ht_H2 + ht_O2)/m_dot_x;
                     %Ttx = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, h_int_p,
                     %gamma);
-
-                    %[Pr_15] = PrixM(M15, gamma) %P/Pt
-                    %P15 = Pr_15*Pt15
-                    %Px = P15
+                    
+                    %Pt_x = Pt_c;
+                    %Pr_15 = PrixM(M15, gamma); %P/Pt
+                    %P15 = Pr_15*Pt15;
+                    %Px = P15;
+                    %Mx = MxPri(Px/Pt_x, gamma);
+                    %Mft_x = MftxM(Mx, gamma);
+                    %Tx = TrixM(Mx, gamma)*Ttx;
+                    %Rx = Rc;
+                    %Ax = m_dot_x*sqrt(Rx*Ttx)/(Mft_x*Pt_x);
 
                     %station 7
                     %m_dot_7 = m_dot_H2_sol + m_dot_O2_sol + m_dot_15;
                     %m_dot_2 = m_dot_15;
                     %h_2 = m_dot_2*Cp0*(T0/TrixM(M0, gamma));
                     %ht_7 = (1/m_dot_7)*(h_2 + h_H2 + h_O2);
-                    %Vx = 
-                    %Ix = m_dot_x*
+                    %Vx = Mx*sqrt(gamma*Rx*Tx);
+                    %Ix = m_dot_x*Vx+Px*Ax;
                     %V15 = M15*sqrt(gamma*R0*(TrixM(M15, gamma))*Tt15)
                     %I15 = m_dot_15*V15+P15*A15;
                     
@@ -153,7 +154,7 @@ M15_cruise = 0.2;
                     %D_cowl = q*C_D*A_cowl;
                     %F_N = Fg - Dram - D_cowl;
 
-                    %check if F_N requirement for cruise/launch
+                    %check if F_N requirement for cruise/launch is met
                     
 
                     
