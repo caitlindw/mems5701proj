@@ -8,7 +8,7 @@ R0 = 49710/(28.97*0.06852177); %gas constant / mixture avg molecular weight (slu
 Cp0 = ((gamma)/(gamma-1))*R0; %lbf/slug-R
 Cp_H2 = 82.65; %lbf/slug-R
 Cp_O2 = 5.2925; %lbf/slug-R
-A0 = 1*10^-4:0.1:15.0001;
+A0_list = 1*10^-4:0.1:15.0001;
 
 %finding mass fractions in chamber to find Rc
 yN_p = 0;
@@ -64,10 +64,7 @@ q_cruise = 0.5*rho0_cruise*V0_cruise^2;
 %section 15 & X to 7 
 M15_cruise = 0.2;
 
-%section 7 -> 9 isentropic flow, mixer
-
-%select a0 using 2 nested for-loops
-
+%intialize matrices for claculations
 m_dot_0_cruise = zeros(4,151);
 m_dot_15_cruise = zeros(4,151);
 Pt15_cruise = zeros(4,151);
@@ -140,7 +137,7 @@ for phi = [1 2 10 1000]
         Tt15_cruise(phi_i,A0_i) = Tt0_cruise;
         A15_cruise(phi_i,A0_i) = m_dot_15_cruise(phi_i,A0_i)*sqrt(R0*Tt15_cruise(phi_i,A0_i))/(Pt15_cruise(phi_i,A0_i)*(MftxM(M15_cruise, gamma)));
         
-        %innermost loop: guess m_dot_c = 200lb/s
+        %innermost loop: guess m_dot_c until the cruise condition is met
         m_dot_c = 0.9;
         counter = 0;
         %stop condition = F_N given -> make a while loop
@@ -228,7 +225,7 @@ for phi = [1 2 10 1000]
             m_dot_c_cruise(phi_i,A0_i) = m_dot_c;
             TSFC_cruise(phi_i,A0_i) = (m_dot_c*3600)/F_N_cruise(phi_i,A0_i);
             Isp_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(32.2*m_dot_c);
-            Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise); %F/m_dot_0
+            Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise(phi_i,A0_i)); %F/m_dot_0
             %fprintf(['phi = ',num2str(phi),' A0 = ',num2str(A0),' m_dot_c = ',num2str(m_dot_c_cruise(phi_i,A0_i)) '\n']);
         end
 
@@ -238,13 +235,15 @@ for phi = [1 2 10 1000]
     phi_i = phi_i+1;
 end
 
+%% Plotting for Cruise, Max Isp calculation
+
 figure(1);
 hold on;
-plot(A0,TSFC_cruise(1,:));
-plot(A0,TSFC_cruise(2,:));
-plot(A0,TSFC_cruise(3,:));
-plot(A0,TSFC_cruise(4,:));
-xlabel('A0 Sweep, ft^2');
+plot(A0_list,TSFC_cruise(1,:));
+plot(A0_list,TSFC_cruise(2,:));
+plot(A0_list,TSFC_cruise(3,:));
+plot(A0_list,TSFC_cruise(4,:));
+xlabel('A0 Sweep (ft^2)');
 ylabel('TSFC');
 title('TSFC Values over A0 Sweep for Cruise');
 legend('\phi = 1','\phi = 2','\phi = 10','\phi = 1000');
@@ -252,10 +251,10 @@ hold off;
 
 figure(2);
 hold on;
-plot(A0,Isp_cruise(1,:));
-plot(A0,Isp_cruise(2,:));
-plot(A0,Isp_cruise(3,:));
-plot(A0,Isp_cruise(4,:));
+plot(A0_list,Isp_cruise(1,:));
+plot(A0_list,Isp_cruise(2,:));
+plot(A0_list,Isp_cruise(3,:));
+plot(A0_list,Isp_cruise(4,:));
 xlabel('A0 Sweep (ft^2)');
 ylabel('Isp (s)');
 title('Isp Values over A0 Sweep for Cruise');
@@ -264,10 +263,10 @@ hold off;
 
 figure(3);
 hold on;
-plot(A0,Fs_cruise(1,:));
-plot(A0,Fs_cruise(2,:));
-plot(A0,Fs_cruise(3,:));
-plot(A0,Fs_cruise(4,:));
+plot(A0_list,Fs_cruise(1,:));
+plot(A0_list,Fs_cruise(2,:));
+plot(A0_list,Fs_cruise(3,:));
+plot(A0_list,Fs_cruise(4,:));
 xlabel('A0 Sweep (ft^2)');
 ylabel('Fs (lb)');
 title('Specific Thrust Values over A0 Sweep for Cruise');
