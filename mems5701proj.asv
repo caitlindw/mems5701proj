@@ -145,12 +145,9 @@ for phi = [1 2 10 1000]
         counter = 0;
         %stop condition = F_N given -> make a while loop
         while F_N_cruise(phi_i,A0_i) < F_np_min_cruise-0.1 || counter >= 10000
-            if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 3000
+            if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 1000
                 m_dot_c = m_dot_c+1;
-            elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 1500
-                m_dot_c = m_dot_c+0.5;
-            elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 200
-                m_dot_c = m_dot_c+0.1;
+            elseif 
             else
                 m_dot_c = m_dot_c+0.01;
             end
