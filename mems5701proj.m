@@ -145,7 +145,7 @@ for phi = [1 2 10 1000]
         counter = 0;
         %stop condition = F_N given -> make a while loop
         while F_N_cruise(phi_i,A0_i) < F_np_min_cruise-0.1 || counter >= 10000
-            if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 3000
+            if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 3000 && A0_i < 11 %not when phi=1000
                 m_dot_c = m_dot_c+1;
             elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 1500
                 m_dot_c = m_dot_c+0.5;
@@ -241,8 +241,9 @@ for phi = [1 2 10 1000]
             %fprintf(['phi = ',num2str(phi),' A0 = ',num2str(A0),' m_dot_c = ',num2str(m_dot_c_cruise(phi_i,A0_i)) '\n']);
         end
 
-        A0_i = A0_i+1;      
+        A0_i = A0_i+1;    
     end
+
     A0_i = 1;
     phi_i = phi_i+1;
 end
@@ -287,64 +288,5 @@ hold off;
 
 %maximum Isp
 [Isp_max,Isp_max_indices] = max(Isp_cruise,[],2);
-
-
-
-%% Part 2
-% pi_fan_initial = 0.7 % Initial guess for compressor pressure ratio
-% A0_initial = 0
-% net_thrust = 0
-%
-% pi_fan = pi_fan_initial
-% A0 = A0_initial
-
-% Cp_turbine = ???
-
-% rho0 = P0 / (T0 * Rair)
-% u0 = M0 * sqrt(gamma * Rair * T0)
-
-% eta_fan = 0.95
-% eta_turbine = 0.9
-% eta_shaft = 0.95
-
-% Iterate over fan pressure ratio
-
-    % Pt0 = P0 / PrixM(M0, gamma)
-    % Pt2 = pi_fan * Pt0
-
-    % Pt15 = Pt2
-    % P15 = PrixM(M15, gamma) * Pt15
-
-    % Px = P15
-    % Ptx = Px / PrixM(1, gamma)
-    % pi_turbine = Ptx / Ptc
-    % tau_turbine = 1 - eta_turbine * (1 - pow(pi_turbine, (gamma-1) / gamma ))
-
-    % Ttx = tau_turbine * Ttc
-    % specific_power = Cpt * (Ttc - Ttx)
-
-    % Iterate over freestream area
-
-        % m_dot0 = rho0 * u0 * A0
-
-        % tau_fan = 1 + (1/eta_fan) * (pow(pi_fan, (gamma-1)/gamma) - 1)
-        % Tt12 = Tt0
-        % Tt13 = tau_fan * Tt12
-
-        % power_fan = m_dot0 * Cpfan * (Tt13 - Tt12)
-        % m_dot_turbine = power_fan / (eta_shaft * specific_power)
-        
-
-
-
-
-
-
-
-
-
-
-
-
 
 
