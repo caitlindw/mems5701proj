@@ -7,16 +7,18 @@ gamma = 1.4;
 MWT_air = MWT_yHyOyN(0, 0.232, 0.768);
 R0 = 5.97994*(8314.4598/MWT_air); %gas constant / mixture avg molecular weight (slug/Kmol)
 Cp0 = ((gamma)/(gamma-1))*R0; %lbf/slug-R
-Cp_H2 = (14.31*1000)*5.97994; %lbf/slug-R
-Cp_O2 = (0.918*1000)*5.97994; %lbf/slug-R
+%Cp_H2 = (14.31*1000)*5.97994; %lbf/slug-R
+Cp_H2 = 87010;
+%Cp_O2 = (0.918*1000)*5.97994; %lbf/slug-R
+Cp_O2 = 5438;
 A0_list = 1*10^-4:0.1:15.0001;
 
 %finding mass fractions in chamber to find Rc
 yN_p = 0;
-yO_p = 32/34;
-yH_p = 2/34;
+yO_p = 32/36;
+yH_p = 4/36;
 MWT_c = MWT_yHyOyN(yH_p, yO_p, 0);
-Rc = 49710/MWT_c;  
+Rc = 5.97994*(8314.4598/MWT_c); % (slug/Kmol)
 Rx = Rc;
 
 
@@ -163,10 +165,18 @@ for phi = [1 2 10 1000]
             %finding mass flow of H2, O2
             %mH2_st = 2
             %mO2_st = 32
-            syms m_dotH2 m_dotO2
-            eq1 = phi == (m_dotH2/m_dotO2)/(2/32);
-            eq2 = m_dot_c == m_dotH2 + m_dotO2;
-            [m_dot_H2_sol_cruise(phi_i,A0_i),m_dot_O2_sol_cruise(phi_i,A0_i)] = solve([eq1,eq2],[m_dotH2,m_dotO2]);
+            %fprintf(['A0_i ' num2str(A0_i), 'phi_i ' num2str(phi_i) '\n']);
+%             if A0_i == 41 && phi_i == 2
+%                 m_dot_H2_sol_cruise(2,41) =   0.0343;      
+%                 m_dot_O2_sol_cruise(2,41) = 0.1373;
+%                 m_dot_c = m_dot_H2_sol_cruise(2,41)+m_dot_O2_sol_cruise(2,41);
+%                 fprintf(['m_dot_c ' num2str(m_dot_c) '\n']);
+%             else
+                syms m_dotH2 m_dotO2
+                eq1 = phi == (m_dotH2/m_dotO2)/((2*2)/32);
+                eq2 = m_dot_c == m_dotH2 + m_dotO2;
+                [m_dot_H2_sol_cruise(phi_i,A0_i),m_dot_O2_sol_cruise(phi_i,A0_i)] = solve([eq1,eq2],[m_dotH2,m_dotO2]);
+%             end
                              
 
             %Station x: Ttx
@@ -176,7 +186,7 @@ for phi = [1 2 10 1000]
             h_int_p_cruise(phi_i,A0_i) = (ht_H2_cruise(phi_i,A0_i) + ht_O2_cruise(phi_i,A0_i))/m_dot_x;
             Ttx_cruise(phi_i,A0_i) = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, h_int_p_cruise(phi_i,A0_i),gamma);
             
-            %Station 5
+            %Station X
             P15_cruise(phi_i,A0_i) = PrixM(M15_cruise, gamma)*Pt15_cruise(phi_i,A0_i);
             Px_cruise(phi_i,A0_i) = P15_cruise(phi_i,A0_i);
             Mx_cruise(phi_i,A0_i) = MxPri(Px_cruise(phi_i,A0_i)/Pt_x, gamma);
@@ -235,6 +245,7 @@ for phi = [1 2 10 1000]
            fprintf('Hit max iterations :(');
         else
             m_dot_c_cruise(phi_i,A0_i) = m_dot_c;
+            %fprintf(['m_dot_c_cruise' num2str(m_dot_c) '\n']);
             TSFC_cruise(phi_i,A0_i) = (m_dot_c*3600)/F_N_cruise(phi_i,A0_i);
             Isp_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(32.2*m_dot_c);
             Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise(phi_i,A0_i)); %F/m_dot_0
@@ -243,7 +254,7 @@ for phi = [1 2 10 1000]
 
         A0_i = A0_i+1;    
     end
-
+    fprintf(['m_dot_H2: ' num2str(m_dot_H2_sol_cruise(2,41),4) ' m_dot_O2: ' num2str(m_dot_O2_sol_cruise(2,41),4)]);
     A0_i = 1;
     phi_i = phi_i+1;
 end
