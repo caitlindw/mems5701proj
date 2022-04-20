@@ -12,6 +12,9 @@ Cp_H2 = 87010;
 %Cp_O2 = (0.918*1000)*5.97994; %lbf/slug-R
 Cp_O2 = 5438;
 A0_list = 1*10^-4:0.1:15.0001;
+hpr = 1300000000;
+a = 0.000088;
+b = 540;
 
 %finding mass fractions in chamber to find Rc
 yN_p = 0;
@@ -20,6 +23,7 @@ yH_p = 4/36;
 MWT_c = MWT_yHyOyN(yH_p, yO_p, 0);
 Rc = 5.97994*(8314.4598/MWT_c); % (slug/Kmol)
 Rx = Rc;
+Cp_c = ((gamma)/(gamma-1))*Rc; %lbf/slug-R
 
 
 %% Launch condition: M=0.8, 30,000 ft altitude, min F_np = 4000 lbf
@@ -36,9 +40,8 @@ V0_launch = M0_launch*sqrt(gamma*R0*T0_launch);
 %cowl drag, launch
 C_D_launch = 0.2;
 pi_inlet_launch = 0.96;
-A0_launch = [1*10^(-4):0.1:15];
 q_launch = 0.5*rho0_launch*V0_launch^2;
-A_cowl_launch = 0.10*A0_launch;
+A_cowl_launch = 0.10*A0_list;
 D_cowl_launch = q_launch*C_D_launch*A_cowl_launch;
 
 %section 15 & X to 7 , mixer
@@ -118,6 +121,8 @@ V9i_cruise = zeros(4,151);
 Fgi_cruise  = zeros(4,151);
 Fg_cruise  = zeros(4,151);
 Dram_cruise  = zeros(4,151);
+A_cowl_cruise = zeros(4,151);
+D_cowl_cruise = zeros(4,151);
 F_N_cruise  = zeros(4,151);
 m_dot_c_cruise = zeros(4,151);
 Isp_cruise = zeros(4,151);
@@ -181,10 +186,18 @@ for phi = [1 2 10 1000]
 
             %Station x: Ttx
             m_dot_x = m_dot_c;
+            %!!!! Something must be wrong here, since we do not calculate
+            %the amount burned hydrogren -> use that instead of just the
+            %amount of hydrogren??
+            %HOW TO GET m_brn_H2 ????
             ht_H2_cruise(phi_i,A0_i) = Cp_H2*Tt_p*m_dot_H2_sol_cruise(phi_i,A0_i);
             ht_O2_cruise(phi_i,A0_i) = Cp_O2*Tt_p*m_dot_O2_sol_cruise(phi_i,A0_i);
             h_int_p_cruise(phi_i,A0_i) = (ht_H2_cruise(phi_i,A0_i) + ht_O2_cruise(phi_i,A0_i))/m_dot_x;
-            Ttx_cruise(phi_i,A0_i) = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, h_int_p_cruise(phi_i,A0_i),gamma);
+            %BUT, ht_int is correct
+            %SO, something must be wrong with yH_p, yO_p, yN_p
+            %DO WE ONLY BURN HALF THE HYDROGEN?? -> nope, still not right
+            Ttx_cruise(phi_i,A0_i) = Ttbrn_yHyOyNhi(yH_p/2, yO_p, yN_p, h_int_p_cruise(phi_i,A0_i),gamma);
+            %eta_b(phi_i,A0_i) = 1-a*(Ttbrn(phi_i,A0_i)-b);
             
             %Station X
             P15_cruise(phi_i,A0_i) = PrixM(M15_cruise, gamma)*Pt15_cruise(phi_i,A0_i);
@@ -233,9 +246,9 @@ for phi = [1 2 10 1000]
             Fgi_cruise(phi_i,A0_i) = m_dot_7_cruise(phi_i,A0_i)*V9i_cruise(phi_i,A0_i);
             Fg_cruise(phi_i,A0_i) = Cfg*Fgi_cruise(phi_i,A0_i);
             Dram_cruise(phi_i,A0_i) = m_dot_0_cruise(phi_i,A0_i)*V0_cruise;
-            A_cowl_cruise = 0.10*A0;
-            D_cowl_cruise = q_cruise*C_D_cruise*A_cowl_cruise;
-            F_N_cruise(phi_i,A0_i) = Fg_cruise(phi_i,A0_i) - Dram_cruise(phi_i,A0_i) - D_cowl_cruise;
+            A_cowl_cruise(phi_i,A0_i) = 0.10*A0;
+            D_cowl_cruise(phi_i,A0_i) = q_cruise*C_D_cruise*A_cowl_cruise(phi_i,A0_i);
+            F_N_cruise(phi_i,A0_i) = Fg_cruise(phi_i,A0_i) - Dram_cruise(phi_i,A0_i) - D_cowl_cruise(phi_i,A0_i);
 
             %check if F_N requirement for cruise/launch is met
             counter = counter + 1;
@@ -259,6 +272,28 @@ for phi = [1 2 10 1000]
     phi_i = phi_i+1;
 end
 
+%% Printing for case of phi=2, Ao=4
+fprintf(['\n \n Freesteam: \n Alt (kft): 60' '\n M: ' num2str(M0_cruise)]);
+fprintf(['\n P (psf): ' num2str(P0_cruise) '\n Pt (psf): ' num2str(Pt0_cruise) '\n T (R): ' num2str(T0_cruise) '\n Tt (R): ' num2str(Tt0_cruise)]);
+fprintf(['\n q (psf): ' num2str(q_cruise) '\n Cd0 (ft^2): ' num2str(A0_list(41)) '\n U (ft/s): ' num2str(V0_cruise) '\n md (slug/s): ' num2str(m_dot_0_cruise(2,41))]);
+fprintf(['\n An (ft^2): ' num2str(A_cowl_cruise(2,41)) '\n Dn (lbf): ' num2str(D_cowl_cruise(2,41)) '\n Dram (lbf): ' num2str(Dram_cruise(2,41)) '\n ']);
+
+fprintf(['\n \n Constants: \n gamma: 1.4' '\n MWT_O2: 32 \n MWT_N2: 28.16 \n MWT_H2: 2']);
+fprintf(['\n delhf: 1300000000' '\n a: 0.000088 \n b: 540 \n']);
+
+fprintf(['\n \n Chamber: ' '\n Tt1: ' num2str(Tt_p) '\n Pt (psf): ' num2str(Pt_c) '\n md_c (slug/s): ' num2str(m_dot_c_cruise(2,41))]);
+fprintf(['\n phi: 2 ' '\n beta: 0' '\n Cp_H2: ' num2str(Cp_H2) '\n Cp_O2: ' num2str(Cp_O2)]);
+fprintf(['\n md_H2: ' num2str(m_dot_H2_sol_cruise(2,41)) '\n md_O2: ' num2str(m_dot_O2_sol_cruise(2,41)) '\n md_N2: 0' '\n m_brn_H2: ???']);
+fprintf(['\n Mbp: ???' '\n R (ft^2/s^2): ' num2str(Rc) '\n Cp (ft^2/s^2): ' num2str(Cp_c) '\n ht_i (ft^2/s^2): ' num2str(h_int_p_cruise(2,41))]);
+fprintf(['\n eta_b: ???' '\n Ttb: ' num2str(Ttx_cruise(2,41)) '\n ']);
+
+fprintf(['\n \n Throat: ' '\n A* (ft^2): ??? \n' ]);
+
+fprintf(['\n \n Primary Exit: ' '\n Mx: ' num2str(Mx_cruise(2,41)) '\n Px: ' num2str(Px_cruise(2,41)) '\n Tx: ' num2str(Tx_cruise(2,41)) '\n Ux: ' num2str(Vx_cruise(2,41))]);
+fprintf(['\n Ae/A*: ' num2str(ArixM(Mx_cruise(2,41), gamma)) '\n Ax: ' num2str(Ax_cruise(2,41)) '\n I (lbf): ' num2str(Ix_cruise(2,41)) '\n Htx: ???']);
+
+%fprintf(['\n \n Inlet: ' '\n Mx: ' num2str(Mx_cruise(2,41)) '\n Px: ' num2str(Px_cruise(2,41)) '\n Tx: ' num2str(Tx_cruise(2,41)) '\n Ux: ' num2str(Vx_cruise(2,41))]);
+%fprintf(['\n Ae/A*: ' num2str(ArixM(Mx_cruise(2,41), gamma)) '\n Ax: ' num2str(Ax_cruise(2,41)) '\n I (lbf): ' num2str(Ix_cruise(2,41)) '\n Htx: ???']);
 %% Plotting for Cruise, Max Isp calculation
 
 figure(1);
