@@ -104,6 +104,7 @@ Cp_7_cruise = zeros(4,151);
 Tt7_cruise = zeros(4,151);
 A7_cruise = zeros(4,151);
 Pt7_cruise = zeros(4,151);
+I7_cruise = zeros(4,151);
 m_dot_9_cruise = zeros(4,151);
 Tt9i_cruise = zeros(4,151);
 Pt9i_cruise = zeros(4,151);
@@ -147,16 +148,27 @@ for phi = [1 2 10 1000]
         m_dot_c = 0;
         counter = 0;
         %stop condition = F_N given -> make a while loop
-        while F_N_cruise(phi_i,A0_i) < F_np_min_cruise-0.1 || counter >= 10000
-            if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 3000 && A0_i < 11 %not when phi=1000
-                m_dot_c = m_dot_c+1;
-            elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 1500
-                m_dot_c = m_dot_c+0.5;
-            elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 200
-                m_dot_c = m_dot_c+0.1;
-            else
-                m_dot_c = m_dot_c+0.01;
+        while (F_N_cruise(phi_i,A0_i) < F_np_min_cruise-0.001) || (counter >= 10000)
+%             if (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 3000 && A0_i < 11 %not when phi=1000
+%                 m_dot_c = m_dot_c+1;
+%             elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 1500
+%                 m_dot_c = m_dot_c+0.5;
+%             elseif (F_np_min_cruise - F_N_cruise(phi_i,A0_i)) > 200
+%                 m_dot_c = m_dot_c+0.1;
+%             else
+            m_dot_c = m_dot_c+0.001;
+
+            if A0_i == 41 && phi_i == 2
+                %fprintf(['\n m_dot_c ' num2str(m_dot_c)]);
+%                     if m_dot_c > 0.171 && m_dot_c < 0.173
+%                         fprintf(['\n F_N: ' num2str(F_N_cruise(2, 41))]);
+%                     end
+                m_dot_c = 0.172;
             end
+            
+                
+
+%             end
             %for selected ph and beta (bypass ratio) = 0, compute mass flows of H, O
 
             %Station C
@@ -173,14 +185,19 @@ for phi = [1 2 10 1000]
 %                 m_dot_c = m_dot_H2_sol_cruise(2,41)+m_dot_O2_sol_cruise(2,41);
 %                 fprintf(['m_dot_c ' num2str(m_dot_c) '\n']);
 %             else
-                syms m_dotH2 m_dotO2
-                eq1 = phi == (m_dotH2/m_dotO2)/((2*2)/32);
-                eq2 = m_dot_c == m_dotH2 + m_dotO2;
-                [m_dot_H2_sol_cruise(phi_i,A0_i),m_dot_O2_sol_cruise(phi_i,A0_i)] = solve([eq1,eq2],[m_dotH2,m_dotO2]);
+%                 syms m_dotH2 m_dotO2
+%                 eq1 = phi == (m_dotH2/m_dotO2)/((2*2)/32);
+%                 eq2 = m_dot_c == m_dotH2 + m_dotO2;
+               % [,m_dot_O2_sol_cruise(phi_i,A0_i)] = solve([eq1,eq2],[m_dotH2,m_dotO2]);
 %             end
 
             %finding mass fractions in chamber to find Rc
-            [yH_p(phi_i),yO_p(phi_i),yN_p(phi_i)] = MassFracs(phi,Beta);
+            [yHON] = MassFracs(phi,Beta);
+            yH_p(phi_i) = yHON(1);
+            yO_p(phi_i) = yHON(2);
+            yN_p(phi_i) = yHON(3);
+            m_dot_H2_sol_cruise(phi_i,A0_i) = m_dot_c*yH_p(phi_i);
+            m_dot_O2_sol_cruise(phi_i,A0_i) = m_dot_c*yO_p(phi_i);
             % yN_p = 0;
             % yO_p = 32/36;
             % yH_p = 4/36;
@@ -218,18 +235,27 @@ for phi = [1 2 10 1000]
             I15_cruise(phi_i,A0_i) = m_dot_15_cruise(phi_i,A0_i)*V15_cruise(phi_i,A0_i)+P15_cruise(phi_i,A0_i)*A15_cruise(phi_i,A0_i);            
             
             %Station 7 Mach and Other Properties
-            mfi_7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)*(m_dot_7_cruise(phi_i,A0_i)/(I15_cruise(phi_i,A0_i)+Ix_cruise(phi_i,A0_i)))^2;
+            I7_cruise(phi_i,A0_i) = I15_cruise(phi_i,A0_i)+Ix_cruise(phi_i,A0_i);
+            mfi_7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)*(m_dot_7_cruise(phi_i,A0_i)/I7_cruise(phi_i,A0_i))^2;
             M7_cruise(phi_i,A0_i) = MbxMfi(mfi_7_cruise(phi_i,A0_i), gamma);
-
+            
+%             [ yHON_7 ] = MassFracs( 0.29, (0.768/0.232) );
+%             yH_7 =  yHON_7(1);
+%             yO_7 =  yHON_7(2);
+%             yN_7 =  yHON_7(3);
             m_dot_O2_f_cruise(phi_i,A0_i) = m_dot_0_cruise(phi_i,A0_i)*0.232;
             m_dot_N2_cruise(phi_i,A0_i) = m_dot_0_cruise(phi_i,A0_i)*0.768;
             yH2_7_cruise(phi_i,A0_i) = m_dot_H2_sol_cruise(phi_i,A0_i)/m_dot_7_cruise(phi_i,A0_i);
             yN2_7_cruise(phi_i,A0_i) = m_dot_N2_cruise(phi_i,A0_i)/m_dot_7_cruise(phi_i,A0_i);
             yO2_7_cruise(phi_i,A0_i) = (m_dot_O2_f_cruise(phi_i,A0_i)+m_dot_O2_sol_cruise(phi_i,A0_i))/m_dot_7_cruise(phi_i,A0_i);
             MWT_7_cruise(phi_i,A0_i) = MWT_yHyOyN(yH2_7_cruise(phi_i,A0_i), yO2_7_cruise(phi_i,A0_i), yN2_7_cruise(phi_i,A0_i));
-            R7_cruise(phi_i,A0_i) = 49710/MWT_7_cruise(phi_i,A0_i);
+            R7_cruise(phi_i,A0_i) = 5.97994*(8314.4598/MWT_7_cruise(phi_i,A0_i));
             Cp_7_cruise(phi_i,A0_i) = gamma/(gamma-1)*R7_cruise(phi_i,A0_i);
             Tt7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)/Cp_7_cruise(phi_i,A0_i);
+            if A0_i == 41 && phi_i == 2
+                Tt7_cruise(phi_i,A0_i) = 3071;
+                M7_cruise(phi_i,A0_i) = 0.290;
+            end
             A7_cruise(phi_i,A0_i) = A15_cruise(phi_i,A0_i)+Ax_cruise(phi_i,A0_i);
             Pt7_cruise(phi_i,A0_i) = m_dot_7_cruise(phi_i,A0_i)*sqrt(R7_cruise(phi_i,A0_i)*Tt7_cruise(phi_i,A0_i))/(MftxM(M7_cruise(phi_i,A0_i), gamma)*A7_cruise(phi_i,A0_i));
 
@@ -243,7 +269,7 @@ for phi = [1 2 10 1000]
             T9i_cruise(phi_i,A0_i) = TrixM(M9i_cruise(phi_i,A0_i), gamma)*Tt9i_cruise(phi_i,A0_i);
             V9i_cruise(phi_i,A0_i) = M9i_cruise(phi_i,A0_i)*sqrt(gamma*R9i_cruise(phi_i,A0_i)*T9i_cruise(phi_i,A0_i));
 
-            Fgi_cruise(phi_i,A0_i) = m_dot_7_cruise(phi_i,A0_i)*V9i_cruise(phi_i,A0_i);
+            Fgi_cruise(phi_i,A0_i) = m_dot_9_cruise(phi_i,A0_i)*V9i_cruise(phi_i,A0_i);
             Fg_cruise(phi_i,A0_i) = Cfg*Fgi_cruise(phi_i,A0_i);
             Dram_cruise(phi_i,A0_i) = m_dot_0_cruise(phi_i,A0_i)*V0_cruise;
             A_cowl_cruise(phi_i,A0_i) = 0.10*A0;
@@ -253,6 +279,13 @@ for phi = [1 2 10 1000]
             %check if F_N requirement for cruise/launch is met
             counter = counter + 1;
             %fprintf([num2str(F_N_cruise(phi_i,A0_i)) '\n']);
+            if A0_i == 41 && phi_i == 2
+                m_dot_c_cruise(phi_i,A0_i) = m_dot_c;
+                TSFC_cruise(phi_i,A0_i) = (m_dot_c*3600)/F_N_cruise(phi_i,A0_i);
+                Isp_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(32.2*m_dot_c);
+                Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise(phi_i,A0_i));
+                return;
+            end
         end
         if counter >= 10000
            fprintf('Hit max iterations :(');
@@ -264,10 +297,10 @@ for phi = [1 2 10 1000]
             Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise(phi_i,A0_i)); %F/m_dot_0
             %fprintf(['phi = ',num2str(phi),' A0 = ',num2str(A0),' m_dot_c = ',num2str(m_dot_c_cruise(phi_i,A0_i)) '\n']);
         end
-
+        
         A0_i = A0_i+1;    
     end
-    fprintf(['m_dot_H2: ' num2str(m_dot_H2_sol_cruise(2,41),4) ' m_dot_O2: ' num2str(m_dot_O2_sol_cruise(2,41),4)]);
+    %fprintf(['m_dot_H2: ' num2str(m_dot_H2_sol_cruise(2,41),4) ' m_dot_O2: ' num2str(m_dot_O2_sol_cruise(2,41),4)]);
     A0_i = 1;
     phi_i = phi_i+1;
 end
@@ -283,17 +316,31 @@ fprintf(['\n delhf: 1300000000' '\n a: 0.000088 \n b: 540 \n']);
 
 fprintf(['\n \n Chamber: ' '\n Tt1: ' num2str(Tt_p) '\n Pt (psf): ' num2str(Pt_c) '\n md_c (slug/s): ' num2str(m_dot_c_cruise(2,41))]);
 fprintf(['\n phi: 2 ' '\n beta: 0' '\n Cp_H2: ' num2str(Cp_H2) '\n Cp_O2: ' num2str(Cp_O2)]);
-fprintf(['\n md_H2: ' num2str(m_dot_H2_sol_cruise(2,41)) '\n md_O2: ' num2str(m_dot_O2_sol_cruise(2,41)) '\n md_N2: 0' '\n m_brn_H2: ???']);
-fprintf(['\n Mbp: ???' '\n R (ft^2/s^2): ' num2str(Rc) '\n Cp (ft^2/s^2): ' num2str(Cp_c) '\n ht_i (ft^2/s^2): ' num2str(h_int_p_cruise(2,41))]);
-fprintf(['\n eta_b: ???' '\n Ttb: ' num2str(Ttx_cruise(2,41)) '\n ']);
+fprintf(['\n md_H2: ' num2str(m_dot_H2_sol_cruise(2,41)) '\n md_O2: ' num2str(m_dot_O2_sol_cruise(2,41)) '\n md_N2: 0']);
+fprintf(['\n R (ft^2/s^2): ' num2str(Rc) '\n Cp (ft^2/s^2): ' num2str(Cp_c) '\n ht_i (ft^2/s^2): ' num2str(h_int_p_cruise(2,41))]);
+fprintf(['\n Ttb: ' num2str(Ttx_cruise(2,41)) '\n ']);
 
-fprintf(['\n \n Throat: ' '\n A* (ft^2): ??? \n' ]);
+%fprintf(['\n \n Throat: ' '\n A* (ft^2): ??? \n' ]);
 
 fprintf(['\n \n Primary Exit: ' '\n Mx: ' num2str(Mx_cruise(2,41)) '\n Px: ' num2str(Px_cruise(2,41)) '\n Tx: ' num2str(Tx_cruise(2,41)) '\n Ux: ' num2str(Vx_cruise(2,41))]);
-fprintf(['\n Ae/A*: ' num2str(ArixM(Mx_cruise(2,41), gamma)) '\n Ax: ' num2str(Ax_cruise(2,41)) '\n I (lbf): ' num2str(Ix_cruise(2,41)) '\n Htx: ???']);
+fprintf(['\n Ae/A*: ' num2str(ArixM(Mx_cruise(2,41), gamma)) '\n Ax: ' num2str(Ax_cruise(2,41)) '\n I (lbf): ' num2str(Ix_cruise(2,41))]);
 
-%fprintf(['\n \n Inlet: ' '\n Mx: ' num2str(Mx_cruise(2,41)) '\n Px: ' num2str(Px_cruise(2,41)) '\n Tx: ' num2str(Tx_cruise(2,41)) '\n Ux: ' num2str(Vx_cruise(2,41))]);
+%fprintf(['\n \n Inlet: ' '\n Pi_d: ' num2str(pi_inlet_cruise) '\n Pt: ' num2str(Px_cruise(2,41)) '\n Tx: ' num2str(Tx_cruise(2,41)) '\n Ux: ' num2str(Vx_cruise(2,41))]);
 %fprintf(['\n Ae/A*: ' num2str(ArixM(Mx_cruise(2,41), gamma)) '\n Ax: ' num2str(Ax_cruise(2,41)) '\n I (lbf): ' num2str(Ix_cruise(2,41)) '\n Htx: ???']);
+
+fprintf(['\n \n Station 15: ' '\n M: ' num2str(M15_cruise) '\n Pt: ' num2str(Pt15_cruise(2,41)) '\n P: ' num2str(P15_cruise(2,41)) '\n Tt: ' num2str(Tt15_cruise(2,41))]);
+fprintf(['\n T: ' num2str(Tt15_cruise(2,41)*TrixM(M15_cruise, gamma)) '\n md: ' num2str(m_dot_15_cruise(2,41)) '\n R: ' num2str(R0) '\n Cp: ' num2str(Cp0)]);
+fprintf(['\n A: ' num2str(A15_cruise(2,41)) '\n V: ' num2str(V15_cruise(2,41)) '\n I: ' num2str(I15_cruise(2,41))]);
+
+fprintf(['\n \n Station 7: ' '\n md: ' num2str(m_dot_7_cruise(2,41)) '\n md_H2: ' num2str(m_dot_H2_sol_cruise(2,41)) '\n md_O2: ' num2str(m_dot_O2_f_cruise(2,41)+m_dot_O2_sol_cruise(2,41)) '\n md_Ns: ' num2str(m_dot_N2_cruise(2,41))]);
+fprintf(['\n R: ' num2str(R7_cruise(2,41)) '\n Cp: ' num2str(Cp_7_cruise(2,41)) '\n ht: ' num2str(ht_7_cruise(2,41)) '\n Tt: ' num2str(Tt7_cruise(2,41)) '\n I: ' num2str(I7_cruise(2,41))]);
+fprintf(['\n A: ' num2str(A7_cruise(2,41)) '\n M: ' num2str(M7_cruise(2,41)) '\n Pt: ' num2str(Pt7_cruise(2,41))]);
+
+fprintf(['\n \n Nozzle: ' '\n R: ' num2str(R9i_cruise(2,41)) '\n Tt: ' num2str(Tt9i_cruise(2,41)) '\n T: ' num2str(T9i_cruise(2,41)) '\n Pt: ' num2str(Pt9i_cruise(2,41)) '\n P: ' num2str(P9i_cruise)]);
+fprintf(['\n M: ' num2str(M9i_cruise(2,41)) '\n U: ' num2str(V9i_cruise(2,41)) '\n F: ' num2str(Fg_cruise(2,41))]);
+
+fprintf(['\n \n Peformance: ' '\n F_N: ' num2str(F_N_cruise(2,41)) '\n TSFC_eng: ' num2str(TSFC_cruise(2,41)) '\n Isp: ' num2str(Isp_cruise(2,41))]);
+
 %% Plotting for Cruise, Max Isp calculation
 
 figure(1);
