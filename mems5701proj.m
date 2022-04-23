@@ -65,7 +65,7 @@ M15_cruise = 0.2;
 
 %% Function
 
-%intialize matrices for claculations
+%intialize matrices for calculations
 m_dot_0_cruise = zeros(4,151);
 m_dot_15_cruise = zeros(4,151);
 Pt15_cruise = zeros(4,151);
@@ -86,6 +86,7 @@ Ax_cruise = zeros(4,151);
 m_dot_7_cruise = zeros(4,151);
 m_dot_2_cruise = zeros(4,151);
 ht_2_cruise = zeros(4,151);
+ht_int_7_cruise = zeros(4,151);
 ht_7_cruise = zeros(4,151);
 Vx_cruise = zeros(4,151);
 Ix_cruise = zeros(4,151);
@@ -158,38 +159,6 @@ for phi = [1 2 10 1000]
 %             else
             m_dot_c = m_dot_c+0.001;
 
-            if A0_i == 41 && phi_i == 2
-                %fprintf(['\n m_dot_c ' num2str(m_dot_c)]);
-%                     if m_dot_c > 0.171 && m_dot_c < 0.173
-%                         fprintf(['\n F_N: ' num2str(F_N_cruise(2, 41))]);
-%                     end
-                m_dot_c = 0.172;
-            end
-            
-                
-
-%             end
-            %for selected ph and beta (bypass ratio) = 0, compute mass flows of H, O
-
-            %Station C
-            %Mk_O2 = 32;
-            %Mk_H2 = 2;
-
-            %finding mass flow of H2, O2
-            %mH2_st = 2
-            %mO2_st = 32
-            %fprintf(['A0_i ' num2str(A0_i), 'phi_i ' num2str(phi_i) '\n']);
-%             if A0_i == 41 && phi_i == 2
-%                 m_dot_H2_sol_cruise(2,41) =   0.0343;      
-%                 m_dot_O2_sol_cruise(2,41) = 0.1373;
-%                 m_dot_c = m_dot_H2_sol_cruise(2,41)+m_dot_O2_sol_cruise(2,41);
-%                 fprintf(['m_dot_c ' num2str(m_dot_c) '\n']);
-%             else
-%                 syms m_dotH2 m_dotO2
-%                 eq1 = phi == (m_dotH2/m_dotO2)/((2*2)/32);
-%                 eq2 = m_dot_c == m_dotH2 + m_dotO2;
-               % [,m_dot_O2_sol_cruise(phi_i,A0_i)] = solve([eq1,eq2],[m_dotH2,m_dotO2]);
-%             end
 
             %finding mass fractions in chamber to find Rc
             [yHON] = MassFracs(phi,Beta);
@@ -228,16 +197,16 @@ for phi = [1 2 10 1000]
             m_dot_7_cruise(phi_i,A0_i) = m_dot_H2_sol_cruise(phi_i,A0_i) + m_dot_O2_sol_cruise(phi_i,A0_i) + m_dot_15_cruise(phi_i,A0_i);
             m_dot_2_cruise(phi_i,A0_i) = m_dot_15_cruise(phi_i,A0_i);
             ht_2_cruise(phi_i,A0_i) = m_dot_2_cruise(phi_i,A0_i)*Cp0*(T0_cruise/TrixM(M0_cruise, gamma));
-            ht_7_cruise(phi_i,A0_i) = (1/m_dot_7_cruise(phi_i,A0_i))*(ht_2_cruise(phi_i,A0_i) + ht_H2_cruise(phi_i,A0_i) + ht_O2_cruise(phi_i,A0_i));
+            ht_int_7_cruise(phi_i,A0_i) = (1/m_dot_7_cruise(phi_i,A0_i))*(ht_2_cruise(phi_i,A0_i) + ht_H2_cruise(phi_i,A0_i) + ht_O2_cruise(phi_i,A0_i));
+            
+            
+            
             Vx_cruise(phi_i,A0_i) = Mx_cruise(phi_i,A0_i)*sqrt(gamma*Rx*Tx_cruise(phi_i,A0_i));
             Ix_cruise(phi_i,A0_i) = m_dot_x*Vx_cruise(phi_i,A0_i)+Px_cruise(phi_i,A0_i)*Ax_cruise(phi_i,A0_i);
             V15_cruise(phi_i,A0_i) = M15_cruise*sqrt(gamma*R0*(TrixM(M15_cruise, gamma))*Tt15_cruise(phi_i,A0_i));
             I15_cruise(phi_i,A0_i) = m_dot_15_cruise(phi_i,A0_i)*V15_cruise(phi_i,A0_i)+P15_cruise(phi_i,A0_i)*A15_cruise(phi_i,A0_i);            
             
-            %Station 7 Mach and Other Properties
-            I7_cruise(phi_i,A0_i) = I15_cruise(phi_i,A0_i)+Ix_cruise(phi_i,A0_i);
-            mfi_7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)*(m_dot_7_cruise(phi_i,A0_i)/I7_cruise(phi_i,A0_i))^2;
-            M7_cruise(phi_i,A0_i) = MbxMfi(mfi_7_cruise(phi_i,A0_i), gamma);
+            
             
 %             [ yHON_7 ] = MassFracs( 0.29, (0.768/0.232) );
 %             yH_7 =  yHON_7(1);
@@ -251,11 +220,16 @@ for phi = [1 2 10 1000]
             MWT_7_cruise(phi_i,A0_i) = MWT_yHyOyN(yH2_7_cruise(phi_i,A0_i), yO2_7_cruise(phi_i,A0_i), yN2_7_cruise(phi_i,A0_i));
             R7_cruise(phi_i,A0_i) = 5.97994*(8314.4598/MWT_7_cruise(phi_i,A0_i));
             Cp_7_cruise(phi_i,A0_i) = gamma/(gamma-1)*R7_cruise(phi_i,A0_i);
-            Tt7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)/Cp_7_cruise(phi_i,A0_i);
-            if A0_i == 41 && phi_i == 2
-                Tt7_cruise(phi_i,A0_i) = 3071;
-                M7_cruise(phi_i,A0_i) = 0.290;
-            end
+
+            Tt7_cruise(phi_i,A0_i) = Ttbrn_yHyOyNhi(yH2_7_cruise(phi_i,A0_i), yO2_7_cruise(phi_i,A0_i), yN2_7_cruise(phi_i,A0_i), ht_int_7_cruise(phi_i,A0_i),gamma);
+            ht_7_cruise(phi_i,A0_i) = Tt7_cruise(phi_i,A0_i) * Cp_7_cruise(phi_i,A0_i);
+
+            %Station 7 Mach and Other Properties
+            I7_cruise(phi_i,A0_i) = I15_cruise(phi_i,A0_i)+Ix_cruise(phi_i,A0_i);
+            mfi_7_cruise(phi_i,A0_i) = ht_7_cruise(phi_i,A0_i)*(m_dot_7_cruise(phi_i,A0_i)/I7_cruise(phi_i,A0_i))^2;
+            M7_cruise(phi_i,A0_i) = MbxMfi(mfi_7_cruise(phi_i,A0_i), gamma);
+
+
             A7_cruise(phi_i,A0_i) = A15_cruise(phi_i,A0_i)+Ax_cruise(phi_i,A0_i);
             Pt7_cruise(phi_i,A0_i) = m_dot_7_cruise(phi_i,A0_i)*sqrt(R7_cruise(phi_i,A0_i)*Tt7_cruise(phi_i,A0_i))/(MftxM(M7_cruise(phi_i,A0_i), gamma)*A7_cruise(phi_i,A0_i));
 
@@ -276,16 +250,8 @@ for phi = [1 2 10 1000]
             D_cowl_cruise(phi_i,A0_i) = q_cruise*C_D_cruise*A_cowl_cruise(phi_i,A0_i);
             F_N_cruise(phi_i,A0_i) = Fg_cruise(phi_i,A0_i) - Dram_cruise(phi_i,A0_i) - D_cowl_cruise(phi_i,A0_i);
 
-            %check if F_N requirement for cruise/launch is met
             counter = counter + 1;
-            %fprintf([num2str(F_N_cruise(phi_i,A0_i)) '\n']);
-            if A0_i == 41 && phi_i == 2
-                m_dot_c_cruise(phi_i,A0_i) = m_dot_c;
-                TSFC_cruise(phi_i,A0_i) = (m_dot_c*3600)/F_N_cruise(phi_i,A0_i);
-                Isp_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(32.2*m_dot_c);
-                Fs_cruise(phi_i,A0_i) = F_N_cruise(phi_i,A0_i)/(m_dot_0_cruise(phi_i,A0_i));
-                return;
-            end
+
         end
         if counter >= 10000
            fprintf('Hit max iterations :(');
