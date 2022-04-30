@@ -34,15 +34,17 @@ P0_cruise       = 1.049 * 144;  % lbf / sq_ft
 F_np_min_cruise = 5000;         %lbf
 M15_cruise      = 0.2;
 Cd_cruise       = 0.4;
+pi_inlet_cruise = 0.669;
 
 
 %% Initialize pi_fan loop
 M0 = M0_cruise;
 P0 = P0_cruise;
 T0 = T0_cruise;
-Rho0 = rho0_cruise;
-M15 = M15_cruise;
-Cd = Cd_cruise;
+Rho0     = rho0_cruise;
+M15      = M15_cruise;
+Cd       = Cd_cruise;
+pi_inlet = pi_inlet_cruise;
 
 Fnp = 0;
 FnpMin = F_np_min_cruise;
@@ -59,12 +61,20 @@ for phi = [1, 2, 10]
     
         Pt0 = P0 / PrixM(M0, gamma);
         Tt0 = T0 / TrixM(M0, gamma);
-        Pt2 = pi_fan * Pt0;
-    
-        Pt15 = Pt2;
-        P15 = PrixM(M15, gamma) * Pt15;
 
-        Tt15 = Tt0;
+        Pt12 = pi_inlet * Pt0;
+        Tt12 = Tt0;
+
+        tau_fan = 1 + (1/eta_fan) * (pi_fan^((gamma-1)/gamma) - 1);
+        Tt13 = tau_fan * Tt12;
+        Pt13 = pi_fan * Pt12;
+
+        
+
+        Pt15 = Pt13;
+        P15  = PrixM(M15, gamma) * Pt15;
+
+        Tt15 = Tt13;
         
         Px = P15;
         Ptx = Px / PrixM(1, gamma);
@@ -95,12 +105,15 @@ for phi = [1, 2, 10]
             % Station 15
             A15 = (m_dot_0 * sqrt(R0 * Tt15)) / (Pt15 * MftxM(M15, gamma));
             T15 = TrixM(M15, gamma) * Tt15;
+            fprintf(num2str(Tt15));
+            fprintf('\n');
+            fprintf(num2str(TrixM(M15, gamma) * Tt15));
             v15 = M15 * sqrt(R0 * gamma * T15);
             I15 = m_dot_0 * v15 + P15 * A15;
     
-            tau_fan = 1 + (1/eta_fan) * ( (pi_fan^((gamma-1)/gamma)) - 1);
-            Tt12 = Tt0;
-            Tt13 = tau_fan * Tt12;
+            %tau_fan = 1 + (1/eta_fan) * ( (pi_fan^((gamma-1)/gamma)) - 1);
+            %Tt12 = Tt0;
+            %Tt13 = tau_fan * Tt12;
 
             % Station t/x
             [yHON] = MassFracs(phi,Beta);
@@ -112,9 +125,9 @@ for phi = [1, 2, 10]
             Rx = Rc;
             Cp_c = ((gamma)/(gamma-1))*Rc; %lbf/slug-R 
 
-            specific_power = Cp_c * (Ttc - Ttx);
+            power_turbine = Cp_c * (Ttc - Ttx);
             power_fan = m_dot_0 * Cp0 * (Tt13 - Tt12);
-            m_dot_turbine = power_fan / (eta_shaft * specific_power);
+            m_dot_turbine = power_fan / (eta_shaft * power_turbine);
 
             % Find enthalpy of constituent species
             m_dot_x = m_dot_turbine;
@@ -203,10 +216,29 @@ for phi = [1, 2, 10]
 
             if pi_fan == 2.0 && phi == 2 
 
+                fprintf('\nEngine: \n');
                 fprintf(append('Fnp:            ', num2str(Fnp), '\n'));
+
+                fprintf('\Fan: \n');
+                fprintf(append('Pt12:           ', num2str(Pt12), '\n'));
+                fprintf(append('Pt13:           ', num2str(Pt13), '\n'));
+                fprintf(append('m_dot_0:        ', num2str(m_dot_0), '\n'));
                 fprintf(append('power_fan:      ', num2str(power_fan), '\n'));
                 fprintf(append('tau_fan:        ', num2str(tau_fan), '\n'));
-                fprintf(append('specific_power: ', num2str(specific_power), '\n'));
+                
+                fprintf('\nStation 15: \n');
+                fprintf(append('A15:           ', num2str(A15), '\n'));
+                fprintf(append('M15:           ', num2str(M15), '\n'));
+                fprintf(append('T15:           ', num2str(T15), '\n'));
+                fprintf(append('Tt15:          ', num2str(Tt15), '\n'));
+                fprintf(append('P15:           ', num2str(P15), '\n'));
+                fprintf(append('Pt15:          ', num2str(Pt15), '\n'));
+                fprintf(append('v15:           ', num2str(v15), '\n'));
+                fprintf(append('I15:           ', num2str(I15), '\n'));
+
+
+                fprintf('\nTurbine: \n');
+                fprintf(append('power_turbine:  ', num2str(power_turbine), '\n'));
                 fprintf(append('Tt13:           ', num2str(Tt13), '\n'));
                 fprintf(append('m_dot_turbine:  ', num2str(m_dot_turbine), '\n'));
                 fprintf(append('ht_H2_turbine:  ', num2str(ht_H2_turbine), '\n'));
