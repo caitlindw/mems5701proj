@@ -20,9 +20,9 @@ Cp_H2 = 87010;
 %Cp_O2 = (0.918*1000)*5.97994; %lbf/slug-R
 Cp_O2 = 5438;
 
-eta_fan = 0.95;
+eta_fan     = 0.95;
 eta_turbine = 0.9;
-eta_shaft = 0.95;
+eta_shaft   = 0.99;
 
 
 
@@ -59,40 +59,64 @@ for phi = [1, 2, 10]
     % Iterate over fan pressure ratio
     for pi_fan = 1.1:0.1:4.1
     
+        %Flight Condition
         Pt0 = P0 / PrixM(M0, gamma);
         Tt0 = T0 / TrixM(M0, gamma);
-
+        
+        %Staton 12
         Pt12 = pi_inlet * Pt0;
         Tt12 = Tt0;
-
+        
+        %Station 13
         tau_fan = 1 + (1/eta_fan) * (pi_fan^((gamma-1)/gamma) - 1);
         Tt13 = tau_fan * Tt12;
+        Tt15 = Tt13;
+%         if pi_fan == 2.0 && phi == 2 
+%             fprintf(['\n Tt12: ' num2str(Tt12)]);
+%             fprintf(['\n Tt13: ' num2str(Tt13)]);
+%             fprintf(['\n Tt15: ' num2str(Tt15)]);
+%         end
         Pt13 = pi_fan * Pt12;
 
-        
-
+        %Station 15
         Pt15 = Pt13;
         P15  = PrixM(M15, gamma) * Pt15;
-
-        Tt15 = Tt13;
         
         Px = P15;
-        Ptx = Px / PrixM(1, gamma);
-        Mx = MxPri(Px/Ptx, gamma);
+        Mx = 1; %given
+        Ptx = Px / PrixM(Mx, gamma);
 
-        pi_turbine = Ptx / Ptc;
+        pi_turbine = Ptx / Ptc; %Pt5/Pt4
     
-        %tau_turbine = 1 - eta_turbine * (1 - pow(pi_turbine, (gamma-1) / gamma ));
-        tau_turbine = 1 - eta_turbine * (pi_turbine^( (gamma-1) / gamma ));
-        Ttx = tau_turbine * Ttc;
+        tau_turbine = 1 - eta_turbine * (1-pi_turbine^( (gamma-1) / gamma ));
+        
+        % Station t/x
+        [yHON] = MassFracs(phi,Beta);
+        yH_p = yHON(1);
+        yO_p = yHON(2);
+        yN_p = yHON(3);
+        MWT_c = MWT_yHyOyN(yH_p, yO_p, yN_p);
+        Rc = 5.97994*(8314.4598/MWT_c); % (slug/Kmol)
+        Rx = Rc;
+        Cp_c = ((gamma)/(gamma-1))*Rc; %lbf/slug-R 
+
+        ht_initial_turbine = Ttc * Cp_c;
+        Tt4 = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
+        Tt5 = Tt4 * tau_turbine;
+        Ttx = Tt5;
+        
+        %Ttx = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
+
         Tx = Ttx * TrixM(Mx, gamma);
+
+        power_turbine = Cp_c * (Ttc - Ttx);       
 
         % Initialize Fn loop
         A0 = 1;
         counter = 0;
+        Fnp = 0;
     
         while Fnp < FnpMin && counter < 1000
-
             % todo: remove this line
             A0 = 2.11;
     
@@ -105,9 +129,6 @@ for phi = [1, 2, 10]
             % Station 15
             A15 = (m_dot_0 * sqrt(R0 * Tt15)) / (Pt15 * MftxM(M15, gamma));
             T15 = TrixM(M15, gamma) * Tt15;
-            fprintf(num2str(Tt15));
-            fprintf('\n');
-            fprintf(num2str(TrixM(M15, gamma) * Tt15));
             v15 = M15 * sqrt(R0 * gamma * T15);
             I15 = m_dot_0 * v15 + P15 * A15;
     
@@ -115,19 +136,10 @@ for phi = [1, 2, 10]
             %Tt12 = Tt0;
             %Tt13 = tau_fan * Tt12;
 
-            % Station t/x
-            [yHON] = MassFracs(phi,Beta);
-            yH_p = yHON(1);
-            yO_p = yHON(2);
-            yN_p = yHON(3);
-            MWT_c = MWT_yHyOyN(yH_p, yO_p, yN_p);
-            Rc = 5.97994*(8314.4598/MWT_c); % (slug/Kmol)
-            Rx = Rc;
-            Cp_c = ((gamma)/(gamma-1))*Rc; %lbf/slug-R 
-
-            power_turbine = Cp_c * (Ttc - Ttx);
+            
             power_fan = m_dot_0 * Cp0 * (Tt13 - Tt12);
-            m_dot_turbine = power_fan / (eta_shaft * power_turbine);
+            m_dot_turbine = abs(power_fan / (eta_shaft * power_turbine));
+
 
             % Find enthalpy of constituent species
             m_dot_x = m_dot_turbine;
@@ -135,15 +147,17 @@ for phi = [1, 2, 10]
             m_dot_O2_turbine = m_dot_x*yO_p;
             ht_H2_turbine = Cp_H2 * Ttc * m_dot_H2_turbine;
             ht_O2_turbine = Cp_O2 * Ttc * m_dot_O2_turbine;
+    
+            %ht_initial_turbine = (ht_H2_turbine + ht_O2_turbine) / m_dot_x;
 
-            ht_initial_turbine = (ht_H2_turbine + ht_O2_turbine) / m_dot_x;
+            
 
             % Find the total temp and total pressure at the chamber exit
             % nozzle
-            Ttx_turbine = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
-            Ptx_turbine = Ptc;
+%             Ttx_turbine = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
+%             Ptx_turbine = Ptc;
 
-            Ax = (m_dot_x * sqrt(Rx * Ttx_turbine)) / (Ptx_turbine * sonic_mft);
+            Ax = (m_dot_x * sqrt(Rx * Ttx)) / (Ptx * sonic_mft);
             Vx = Mx * sqrt(Rx * gamma * Tx);
             Ix = m_dot_x * Vx + Px * Ax;
 
@@ -219,7 +233,7 @@ for phi = [1, 2, 10]
                 fprintf('\nEngine: \n');
                 fprintf(append('Fnp:            ', num2str(Fnp), '\n'));
 
-                fprintf('\Fan: \n');
+                fprintf('\nFan: \n');
                 fprintf(append('Pt12:           ', num2str(Pt12), '\n'));
                 fprintf(append('Pt13:           ', num2str(Pt13), '\n'));
                 fprintf(append('m_dot_0:        ', num2str(m_dot_0), '\n'));
@@ -236,11 +250,21 @@ for phi = [1, 2, 10]
                 fprintf(append('v15:           ', num2str(v15), '\n'));
                 fprintf(append('I15:           ', num2str(I15), '\n'));
 
+                fprintf('\nTtb: \n');
+                fprintf(append('Tt4:           ', num2str(Tt4), '\n'));
 
                 fprintf('\nTurbine: \n');
+                fprintf(append('tau_turbine:  ', num2str(tau_turbine), '\n'));
                 fprintf(append('power_turbine:  ', num2str(power_turbine), '\n'));
-                fprintf(append('Tt13:           ', num2str(Tt13), '\n'));
+                fprintf(append('Ttx:           ', num2str(Ttx), '\n'));
+                fprintf(append('Tx:           ', num2str(Tx), '\n'));
+                fprintf(append('Ptx:           ', num2str(Ptx), '\n'));
+                fprintf(append('Px:           ', num2str(Px), '\n'));
+                fprintf(append('Cp:           ', num2str(Cp_c), '\n'));
+                fprintf(append('R:           ', num2str(Rc), '\n'));
                 fprintf(append('m_dot_turbine:  ', num2str(m_dot_turbine), '\n'));
+                fprintf(append('m_dot_H2_turbine:  ', num2str(m_dot_H2_turbine), '\n'));
+                fprintf(append('m_dot_O2_turbine:  ', num2str(m_dot_O2_turbine), '\n'));
                 fprintf(append('ht_H2_turbine:  ', num2str(ht_H2_turbine), '\n'));
                 fprintf(append('ht_O2_turbine:  ', num2str(ht_O2_turbine), '\n'));
 
