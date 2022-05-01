@@ -1,5 +1,5 @@
 %% Part 2
-
+close all;
 
 %% Constants
 Ptc = 2e5;
@@ -15,39 +15,33 @@ MWT_air = MWT_yHyOyN(0, 0.232, 0.768);
 R0 = 5.97994*(8314.4598/MWT_air); %gas constant / mixture avg molecular weight (slug/Kmol)
 Cp0 = R0 * (gamma / (gamma-1));
 
-%Cp_H2 = (14.31*1000)*5.97994; %lbf/slug-R
 Cp_H2 = 87010;
-%Cp_O2 = (0.918*1000)*5.97994; %lbf/slug-R
 Cp_O2 = 5438;
 
 eta_fan     = 0.95;
 eta_turbine = 0.9;
 eta_shaft   = 0.99;
 
-
-
-%% Cruise Conditions
-M0_cruise       = 4.0;
-rho0_cruise     = 2.26e-4;      % slug / cu_ft - Atmosphere Table
-T0_cruise       = 389.97;       % R - Atmosphere Table
-P0_cruise       = 1.049 * 144;  % lbf / sq_ft
-F_np_min_cruise = 5000;         %lbf
-M15_cruise      = 0.2;
-Cd_cruise       = 0.4;
-pi_inlet_cruise = 0.669;
-
+%% Launch Conditions
+M0_launch       = 0.8;
+rho0_launch     = 8.91e-4;      % slug / cu_ft - Atmosphere Table
+T0_launch       = 411.84;       % R - Atmosphere Table
+P0_launch       = 4.373 * 144;  % lbf / sq_ft
+F_np_min_launch = 4000;
+M15_launch      = 0.2;
+Cd_launch       = 0.2;
+pi_inlet_launch = 0.96;
 
 %% Initialize pi_fan loop
-M0 = M0_cruise;
-P0 = P0_cruise;
-T0 = T0_cruise;
-Rho0     = rho0_cruise;
-M15      = M15_cruise;
-Cd       = Cd_cruise;
-pi_inlet = pi_inlet_cruise;
+M0 = M0_launch;
+P0 = P0_launch;
+T0 = T0_launch;
 
-%Fnp = 0;
-FnpMin = F_np_min_cruise;
+Rho0     = rho0_launch;
+M15      = M15_launch;
+Cd       = Cd_launch;
+pi_inlet = pi_inlet_launch;
+FnpMin  = F_np_min_launch;
 
 phi_index = 1;
 pi_fan_index = 1;
@@ -348,6 +342,8 @@ for phi = [1, 2, 10]
         else
 
             fprintf('hit max iter\n');
+            fprintf(append('phi:    ', num2str(phi), '\n'));
+            fprintf(append('pi_fan: ', num2str(pi_fan), '\n'));
 
         end
 
