@@ -45,6 +45,7 @@ FnpMin  = F_np_min_launch;
 
 phi_index = 1;
 pi_fan_index = 1;
+pi_fan_list = 1.1:0.1:4.1;
 
 %Flight Condition
 Pt0 = P0 / PrixM(M0, gamma);
@@ -355,4 +356,40 @@ for phi = [1, 2, 10]
 
 end
 
+%% Plotting for Cruise, Max Isp calculation
 
+figure(1);
+hold on;
+plot(pi_fan_list,SFC(1,:));
+plot(pi_fan_list,SFC(2,:));
+plot(pi_fan_list,SFC(3,:));
+xlabel('\pi_{fan} Sweep');
+ylabel('TSFC');
+title('TSFC Values over \pi_{fan} Sweep for Launch');
+legend('\phi = 1','\phi = 2','\phi = 10');
+hold off;
+
+figure(2);
+hold on;
+plot(pi_fan_list,Isp(1,:));
+plot(pi_fan_list,Isp(2,:));
+plot(pi_fan_list,Isp(3,:));
+xlabel('\pi_{fan} Sweep');
+ylabel('Isp (s)');
+title('Isp Values over \pi_{fan} Sweep for Launch');
+legend('\phi = 1','\phi = 2','\phi = 10');
+hold off;
+
+figure(3);
+hold on;
+plot(pi_fan_list,Fs(1,:));
+plot(pi_fan_list,Fs(2,:));
+plot(pi_fan_list,Fs(3,:));
+xlabel('\pi_{fan} Sweep');
+ylabel('Fs (lb)');
+title('Specific Thrust Values over \pi_{fan} Sweep for Launch');
+legend('\phi = 1','\phi = 2','\phi = 10');
+hold off;
+
+%maximum Isp
+[Isp_max_cruise,Isp_max_indices_cruise] = max(Isp,[],2);
