@@ -104,21 +104,19 @@ for phi = [1, 2, 10]
         Tt4 = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
         Tt5 = Tt4 * tau_turbine;
         Ttx = Tt5;
-        
-        %Ttx = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
 
         Tx = Ttx * TrixM(Mx, gamma);
 
-        power_turbine = Cp_c * (Ttc - Ttx);       
+        power_turbine = Cp_c * (Tt4 - Tt5);       
 
         % Initialize Fn loop
-        A0 = 1;
+        A0 = 0.01;
         counter = 0;
         Fnp = 0;
     
-        while Fnp < FnpMin && counter < 1000
-            % todo: remove this line
-            A0 = 2.11;
+        while Fnp < FnpMin && counter < 10000
+            
+            %A0 = 2.11; % todo: remove this line
     
             % Freestream 
             u0      = M0 * sqrt(gamma*R0*T0);
@@ -131,15 +129,9 @@ for phi = [1, 2, 10]
             T15 = TrixM(M15, gamma) * Tt15;
             v15 = M15 * sqrt(R0 * gamma * T15);
             I15 = m_dot_0 * v15 + P15 * A15;
-    
-            %tau_fan = 1 + (1/eta_fan) * ( (pi_fan^((gamma-1)/gamma)) - 1);
-            %Tt12 = Tt0;
-            %Tt13 = tau_fan * Tt12;
-
             
             power_fan = m_dot_0 * Cp0 * (Tt13 - Tt12);
             m_dot_turbine = abs(power_fan / (eta_shaft * power_turbine));
-
 
             % Find enthalpy of constituent species
             m_dot_x = m_dot_turbine;
@@ -148,15 +140,8 @@ for phi = [1, 2, 10]
             ht_H2_turbine = Cp_H2 * Ttc * m_dot_H2_turbine;
             ht_O2_turbine = Cp_O2 * Ttc * m_dot_O2_turbine;
     
-            %ht_initial_turbine = (ht_H2_turbine + ht_O2_turbine) / m_dot_x;
-
-            
-
             % Find the total temp and total pressure at the chamber exit
             % nozzle
-%             Ttx_turbine = Ttbrn_yHyOyNhi(yH_p, yO_p, yN_p, ht_initial_turbine, gamma);
-%             Ptx_turbine = Ptc;
-
             Ax = (m_dot_x * sqrt(Rx * Ttx)) / (Ptx * sonic_mft);
             Vx = Mx * sqrt(Rx * gamma * Tx);
             Ix = m_dot_x * Vx + Px * Ax;
@@ -167,7 +152,7 @@ for phi = [1, 2, 10]
             A7 = Ax + A15;
             I7 = Ix + I15;
             m_dot_7      = m_dot_x + m_dot_0;
-            ht_initial_7 = (ht_0 * ht_H2_turbine * ht_O2_turbine) / m_dot_7;
+            ht_initial_7 = (ht_0 + ht_H2_turbine + ht_O2_turbine) / m_dot_7;
 
             % Find the mass fractions of oxygen, hydrogen, and nitrogen in
             % the combined stream
@@ -217,25 +202,25 @@ for phi = [1, 2, 10]
             % Calc net propulsive force
             Fnp = Fg - Dram - Dcowl;
 
-            
             A0 = A0 + 0.01;
             counter = counter + 1;
             % end while loop
     
         end
 
-        if counter < 1000
+        if counter < 10000
 
-            % todo: calc Fs, Isp, and SFC
+            % Calculate performance parameters
+            SFC = (m_dot_turbine * 32.17*3600) / Fnp;
+            Isp = Fnp / (32.2 * m_dot_turbine);
+            Fs  = Fnp / m_dot_0;
 
             if pi_fan == 2.0 && phi == 2 
-
-                fprintf('\nEngine: \n');
-                fprintf(append('Fnp:            ', num2str(Fnp), '\n'));
 
                 fprintf('\nFan: \n');
                 fprintf(append('Pt12:           ', num2str(Pt12), '\n'));
                 fprintf(append('Pt13:           ', num2str(Pt13), '\n'));
+                fprintf(append('A0:             ', num2str(A0), '\n'));
                 fprintf(append('m_dot_0:        ', num2str(m_dot_0), '\n'));
                 fprintf(append('power_fan:      ', num2str(power_fan), '\n'));
                 fprintf(append('tau_fan:        ', num2str(tau_fan), '\n'));
@@ -254,19 +239,42 @@ for phi = [1, 2, 10]
                 fprintf(append('Tt4:           ', num2str(Tt4), '\n'));
 
                 fprintf('\nTurbine: \n');
-                fprintf(append('tau_turbine:  ', num2str(tau_turbine), '\n'));
-                fprintf(append('power_turbine:  ', num2str(power_turbine), '\n'));
-                fprintf(append('Ttx:           ', num2str(Ttx), '\n'));
-                fprintf(append('Tx:           ', num2str(Tx), '\n'));
-                fprintf(append('Ptx:           ', num2str(Ptx), '\n'));
-                fprintf(append('Px:           ', num2str(Px), '\n'));
-                fprintf(append('Cp:           ', num2str(Cp_c), '\n'));
-                fprintf(append('R:           ', num2str(Rc), '\n'));
-                fprintf(append('m_dot_turbine:  ', num2str(m_dot_turbine), '\n'));
-                fprintf(append('m_dot_H2_turbine:  ', num2str(m_dot_H2_turbine), '\n'));
-                fprintf(append('m_dot_O2_turbine:  ', num2str(m_dot_O2_turbine), '\n'));
-                fprintf(append('ht_H2_turbine:  ', num2str(ht_H2_turbine), '\n'));
-                fprintf(append('ht_O2_turbine:  ', num2str(ht_O2_turbine), '\n'));
+                fprintf(append('tau_turbine:      ', num2str(tau_turbine), '\n'));
+                fprintf(append('power_turbine:    ', num2str(power_turbine), '\n'));
+                fprintf(append('Ttx:              ', num2str(Ttx), '\n'));
+                fprintf(append('Tx:               ', num2str(Tx), '\n'));
+                fprintf(append('Ptx:              ', num2str(Ptx), '\n'));
+                fprintf(append('Px:               ', num2str(Px), '\n'));
+                fprintf(append('Cp:               ', num2str(Cp_c), '\n'));
+                fprintf(append('R:                ', num2str(Rc), '\n'));
+                fprintf(append('m_dot_turbine:    ', num2str(m_dot_turbine), '\n'));
+                fprintf(append('m_dot_H2_turbine: ', num2str(m_dot_H2_turbine), '\n'));
+                fprintf(append('m_dot_O2_turbine: ', num2str(m_dot_O2_turbine), '\n'));
+                fprintf(append('ht_H2_turbine:    ', num2str(ht_H2_turbine), '\n'));
+                fprintf(append('ht_O2_turbine:    ', num2str(ht_O2_turbine), '\n'));
+
+                fprintf('\nStation 7: \n');
+                fprintf(append('m_dot_7:          ', num2str(m_dot_7), '\n'));
+                fprintf(append('Pt7:              ', num2str(Pt7), '\n'));
+                fprintf(append('Tt7:              ', num2str(Tt7), '\n'));
+                fprintf(append('M7:               ', num2str(M7), '\n'));
+                fprintf(append('ht7:              ', num2str(ht7), '\n'));
+                fprintf(append('I7:               ', num2str(I7), '\n'));
+                fprintf(append('A7:               ', num2str(A7), '\n'));
+                fprintf(append('ht_initial_7:     ', num2str(ht_initial_7), '\n'));
+                fprintf(append('Cp7:              ', num2str(Cp7), '\n'));
+                fprintf(append('R7:               ', num2str(R7), '\n'));
+
+                fprintf('\nStation 9: \n');
+                fprintf(append('M9_ideal:              ', num2str(M9_ideal), '\n'));
+                fprintf(append('T9_ideal:              ', num2str(T9_ideal), '\n'));
+                fprintf(append('V9_ideal:              ', num2str(V9_ideal), '\n'));
+
+                fprintf('\nPerformance: \n');
+                fprintf(append('Fnp:            ', num2str(Fnp), '\n'));
+                fprintf(append('SFC:            ', num2str(SFC), '\n'));
+                fprintf(append('Isp:            ', num2str(Isp), '\n'));
+                fprintf(append('Fs:             ', num2str(Fs), '\n'));
 
             end
 
